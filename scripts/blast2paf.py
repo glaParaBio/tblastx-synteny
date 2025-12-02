@@ -86,6 +86,7 @@ out = out[
     & (out.length >= args.min_length)
 ]
 out.rename(columns={"#qaccver": "qaccver"}, inplace=True)
+out = out.drop(["sstrand"], axis=1)
 
 qstart = []
 qend = []
@@ -125,13 +126,28 @@ out["saccver_length"] = saccver_length
 out["strand"] = strand
 out["mapq"] = 255
 out["blast_pident"] = ["pi:f:%s" % x for x in out["pident"]]
-out["blast_nident"] = ["ni:i:%s" % x for x in out["nident"]]
+# out["blast_nident"] = ["ni:i:%s" % x for x in out["nident"]]
 out["blast_evalue"] = ["ev:f:%s" % x for x in out["evalue"]]
-out["nident"] = "*"
-out = out.sort_values(["qaccver", "qstart", "qend", "saccver", "sstart", "send"])
+# out["nident"] = "*"
 
+# Keep highest bitscore for alignments at the same coords
+coords = [
+    "qaccver",
+    "saccver",
+    "qstart",
+    "qend",
+    "sstart",
+    "send",
+    "strand",
+]
+best = out.groupby(coords, as_index=False).agg(bitscore=("bitscore", "max"))
+out = out.merge(best)
+
+out["blast_bitscore"] = ["bs:f:%s" % x for x in out["bitscore"]]
+out = out.drop(["bitscore"], axis=1)
+out = out.sort_values(["qaccver", "qstart", "qend", "saccver", "sstart", "send"])
 out.rename(columns={"qaccver": "#qaccver"}, inplace=True)
-out[
+out = out[
     [
         "#qaccver",
         "qaccver_length",
@@ -148,5 +164,7 @@ out[
         "blast_pident",
         "blast_nident",
         "blast_evalue",
+        "blast_bitscore",
     ]
-].to_csv(sys.stdout, sep="\t", index=False, header=args.header)
+].drop_duplicates()
+out.to_csv(sys.stdout, sep="\t", index=False, header=args.header)

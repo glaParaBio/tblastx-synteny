@@ -4,6 +4,7 @@ import argparse
 import os
 import subprocess as sp
 import sys
+from colorama import Fore, Style
 
 parser = argparse.ArgumentParser(
     description="Create a synteny file in PAF format using tblastx",
@@ -32,8 +33,8 @@ parser.add_argument(
 parser.add_argument(
     "--directory",
     "-d",
-    help="Output directory [%(default)s]",
-    default="synteny-output",
+    help="Output directory",
+    required=True,
 )
 parser.add_argument(
     "--jobs",
@@ -52,10 +53,25 @@ parser.add_argument(
     "--task",
     "-t",
     help="Blast task to run [%(default)s]",
-    default='tblastx',
-    choices=['tblastx', 'blastn', 'megablast'],
+    default="tblastx",
+    choices=["tblastx", "blastn", "megablast"],
 )
-
+_default = "-evalue 0.01 -max_target_seqs 10"
+parser.add_argument(
+    "--blast-args",
+    "-b",
+    help=f"A single string of further arguments to blast [{_default}]",
+    default=[_default],
+    nargs=1,
+)
+_default = "--printshellcmds"
+parser.add_argument(
+    "--smk-args",
+    "-a",
+    help=f"A single string of further arguments to snakemake. E.g. '--keep-going --notemp' [{_default}]",
+    default=[_default],
+    nargs=1,
+)
 
 parser.add_argument("--version", "-v", action="version", version="%(prog)s 0.1.0")
 
@@ -64,10 +80,15 @@ args = parser.parse_args()
 query = os.path.abspath(args.query)
 subject = os.path.abspath(args.subject)
 dry_run = "--dry-run" if args.dry_run else ""
+smk_args = " ".join(args.smk_args)
+blast_args = " ".join(args.blast_args).strip()
+
+if blast_args:
+    blast_args = f"blast_args='{blast_args}'"
+
 cwd = os.getcwd()
 
-snakecmd = f"""
-snakemake --printshellcmds \
+snakecmd = f"""snakemake \
     --jobs {args.jobs} \
     -s workflows/blast.smk \
     --directory {args.directory} \
@@ -76,24 +97,28 @@ snakemake --printshellcmds \
              subject={subject} \
              chunk_size={args.chunk_size} \
              task={args.task} \
-             cwd={cwd}
+             {blast_args} \
+             cwd={cwd} \
+    {smk_args}
 """
 
-print(snakecmd)
+sys.stderr.write(Fore.GREEN + snakecmd + Style.RESET_ALL)
 
-stderr = []
-p = sp.Popen(snakecmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE, text=True)
-while True:
-    so = p.stdout.readline()
-    se = p.stderr.readline()
-    print(so, end="")
-    print(se, end="")
-    stderr.append(se.strip())
-    if not so and not se:
-        break
+p = sp.Popen(
+    snakecmd,
+    shell=True,
+    stdout=sp.PIPE,
+    stderr=sp.STDOUT,
+    text=True,
+    bufsize=1,
+    universal_newlines=True,
+)
+
+for line in iter(p.stdout.readline, ""):
+    sys.stderr.write(Fore.YELLOW + line.strip() + "\n" + Style.RESET_ALL)
+p.stdout.close()
 p.wait()
 
 if p.returncode != 0:
-    raise sp.CalledProcessError(
-        returncode=p.returncode, cmd=snakecmd, output="\n".join(stderr)
-    )
+    sys.stderr.write(Fore.RED + f"Error executing {snakecmd}\n" + Style.RESET_ALL)
+    sys.exit(p.returncode)

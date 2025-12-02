@@ -1,1 +1,11 @@
 *.swp
+*.fai
+*.ndb
+*.nhr
+*.nin
+*.njs
+*.not
+*.nsq
+*.ntf
+*.nto
+*.snakemake

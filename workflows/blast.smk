@@ -1,6 +1,5 @@
 import pandas
 import glob
-import time
 
 QUERY = config["query"]
 SUBJECT = config["subject"]
@@ -73,7 +72,7 @@ checkpoint split_query:
         fa=QUERY,
         fai=f"{QUERY}.fai",
     output:
-        outdir=temp(directory("split")),
+        outdir=directory("split_tmp"),
     params:
         chunk_size=config["chunk_size"],
         cwd=config["cwd"],
@@ -87,35 +86,25 @@ checkpoint split_query:
 
 rule blast:
     input:
-        query="split/{window}.fa",
+        query="split_tmp/{window}.fa",
         db=f"{SUBJECT}.nin",
         subject=SUBJECT,
     output:
-        out=temp("{blast}/{window}.tmp"),
+        tmp=temp("{blast}/{window}.tmp"),
+        out="{blast}/{window}.out",
     params:
         fmt=" ".join(BLAST_FMT),
         task=task,
-    shell:
-        r"""
-        echo "{params.fmt}" | tr ' ' '\t' > {output.out}
-        {params.task} -query {input.query} \
-           -db {input.subject} \
-           -evalue 0.1 \
-           -max_target_seqs 10 \
-           -outfmt "6 {params.fmt}" >> {output.out}
-        """
-
-
-rule offset_blast_coords:
-    input:
-        out="%s/{window}.tmp" % config["task"],
-    output:
-        out="{blast}/{window}.out",
-    params:
+        blast_args='' if 'blast_args' not in config else config['blast_args'],
         cwd=config["cwd"],
     shell:
         r"""
-        {params.cwd}/scripts/offset_blast.py {input.out} > {output.out}
+        echo "{params.fmt}" | tr ' ' '\t' > {output.tmp}
+        {params.task} -query {input.query} \
+           -db {input.subject} \
+           {params.blast_args} \
+           -outfmt "6 {params.fmt}" >> {output.tmp}
+        {params.cwd}/scripts/offset_blast.py {output.tmp} > {output.out}
         """
 
 
@@ -125,7 +114,7 @@ rule blast_to_paf:
         query_fai=f"{QUERY}.fai",
         subject_fai=f"{SUBJECT}.fai",
     output:
-        paf="paf/{window}.paf",
+        paf=temp("paf/{window}.paf"),
     params:
         cwd=config["cwd"],
         task=config['task'],
@@ -137,13 +126,13 @@ rule blast_to_paf:
                 --subject-fai {input.subject_fai} \
                 --blast-task {params.task} \
                 --header \
-                --min-pident 95 \
-                --min-length 50 \
-                --max-evalue 0.01 > {output.paf}
+                --min-pident 0 \
+                --min-length 0 \
+                --max-evalue 1000 > {output.paf}
         """
 
 
-def aggregate_blast(wc):
+def aggregate_paf(wc):
     checkpoint_output = checkpoints.split_query.get().output.outdir
     outfiles = [
         os.path.basename(x) for x in glob.glob(os.path.join(checkpoint_output, "*.fa"))
@@ -152,10 +141,9 @@ def aggregate_blast(wc):
     return expand("paf/{window}.paf", window=windows)
 
 
-rule cat_blast:
+rule cat_paf:
     input:
-        paf=aggregate_blast,
-        sdir="split",  # This is just to tell snakemake that split dir is no longer needed
+        paf=aggregate_paf,
     output:
         paf=f"{qn}_vs_{sn}.paf",
     params:
