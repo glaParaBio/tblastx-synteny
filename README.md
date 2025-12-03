@@ -8,16 +8,26 @@
 
 # Setup
 
+Install dependencies:
+
 ```
 conda create -n tblastx-synteny
 conda activate tblastx-synteny
 conda install --yes -n tblastx-synteny --file requirements.txt
 ```
 
-# Run
+Install:
 
 ```
-./tblastx-synteny.py \
+pip install .
+```
+
+# Run
+
+This may take a a few minutes:
+
+```
+tblastx-synteny \
     --subject test/data/PlasmoDB-68_PbergheiANKA_Genome.fasta \
     --query test/data/Pfalciparum3D7.small.fasta \
     --directory out \

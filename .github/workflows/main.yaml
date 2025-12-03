@@ -36,12 +36,13 @@ jobs:
         conda activate tblastx-synteny
         ./test/test.py
 
-    - name: Run from different directory
+    - name: Test installation
       shell: bash -l {0}
       run: |
         conda activate tblastx-synteny
-        cd ../
-        ./tblastx-synteny/tblastx-synteny.py \
+        pip install .
+        cd ..
+        tblastx-synteny \
           -q tblastx-synteny/test/data/PbANKA_MIT_v3.fa \
           -s tblastx-synteny/test/data/Pf3D7_MIT_v3.fa \
           -d out

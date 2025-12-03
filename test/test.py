@@ -8,7 +8,7 @@ import unittest
 import pandas
 import glob
 
-py = "./tblastx-synteny.py"
+py = "./src/tblastx_synteny/cli.py"
 
 
 class shell:

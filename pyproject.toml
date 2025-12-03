@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tblastx-synteny"
+version = "0.1.0"
+description = "CLI tool for synteny analysis using BLAST and Snakemake"
+requires-python = ">=3.9"
+
+# Install CLI tool
+[project.scripts]
+tblastx-synteny = "tblastx_synteny.cli:main"
+
+# ------------------------
+# HATCHLING PACKAGE SETTINGS
+# ------------------------
+
+[tool.hatch.build.targets.wheel]
+# tell hatch where the Python package is
+packages = ["src/tblastx_synteny"]
+
+# include non-Python files inside your package
+[tool.hatch.build]
+include = [
+    "src/tblastx_synteny/scripts/*",
+    "src/tblastx_synteny/workflows/*",
+]
