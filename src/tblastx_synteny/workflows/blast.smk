@@ -35,6 +35,8 @@ else:
 qn = re.sub("\\.fa$|\\.fasta$|\\.fna", "", os.path.basename(QUERY), flags=re.I)
 sn = re.sub("\\.fa$|\\.fasta$|\\.fna", "", os.path.basename(SUBJECT), flags=re.I)
 
+# wildcard_constraints:
+
 
 localrules:
     all,
@@ -67,10 +69,36 @@ rule faidx:
         """
 
 
+if "query_regions" in config:
+
+    rule query_regions:
+        input:
+            bed=config["query_regions"],
+        output:
+            bed=temp("query_regions.bed"),
+        shell:
+            r"""
+            bedtools sort -i {input.bed} \
+            | bedtools merge > {output.bed}
+            """
+
+else:
+
+    rule query_regions:
+        input:
+            fai=f"{QUERY}.fai",
+        output:
+            bed=temp("query_regions.bed"),
+        shell:
+            r"""
+            awk -v OFS='\t' -v FS='\t' '{{print $1, 0, $2}}' {input.fai} > {output.bed}
+            """
+
+
 checkpoint split_query:
     input:
         fa=QUERY,
-        fai=f"{QUERY}.fai",
+        bed="query_regions.bed",
     output:
         outdir=directory("split_tmp"),
     params:
@@ -79,7 +107,7 @@ checkpoint split_query:
     shell:
         r"""
         mkdir {output.outdir}
-        bedtools makewindows -g {input.fai} -w {params.chunk_size} \
+        bedtools makewindows -b {input.bed} -w {params.chunk_size} \
         | {params.cwd}/scripts/split_fasta.py --bed - --outdir {output.outdir} {input.fa}
         """
 

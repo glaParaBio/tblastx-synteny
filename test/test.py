@@ -45,9 +45,9 @@ class Test(unittest.TestCase):
             shutil.rmtree("test_out")
         os.makedirs("test_out/input")
 
-    def tearDown(self):
-        if os.path.exists("test_out"):
-            shutil.rmtree("test_out")
+    # def tearDown(self):
+    #    if os.path.exists("test_out"):
+    #        shutil.rmtree("test_out")
 
     def testCanPrintHelp(self):
         cmd = f"{py} --help"
@@ -174,6 +174,49 @@ class Test(unittest.TestCase):
             sorted(set(paf["#qaccver"])), ["Pf3D7_01_v3", "Pf3D7_02_v3", "Pf3D7_API_v3"]
         )
         self.assertEqual(len(set(paf["saccver"])), 15)
+
+    def testQueryRegions(self):
+        shell(
+            "cp test/data/Pfalciparum3D7.small.fasta test/data/PlasmoDB-68_PbergheiANKA_Genome.fasta test/data/query_regions.bed test_out/input/"
+        )
+        shell(
+            f"{py} -q test/data/Pfalciparum3D7.small.fasta -s test/data/Pfalciparum3D7.small.fasta -d test_out/ -S 5000 --task blastn -r test_out/input/query_regions.bed -a --nt"
+        )
+        # Ensure query coordinates are relative to the whole genome not just to the extracted region
+        paf = pandas.read_csv(
+            "test_out/Pfalciparum3D7.small_vs_Pfalciparum3D7.small.paf", sep="\t"
+        )
+        self.assertEqual(
+            len(
+                paf[
+                    (paf["#qaccver"] == "Pf3D7_01_v3")
+                    & (paf["qstart"] == 1000)
+                    & (paf["qend"] == 6000)
+                ]
+            ),
+            1,
+        )
+        self.assertEqual(
+            len(
+                paf[
+                    (paf["#qaccver"] == "Pf3D7_01_v3")
+                    & (paf["qstart"] == 6000)
+                    & (paf["qend"] == 11000)
+                ]
+            ),
+            1,
+        )
+        self.assertEqual(
+            len(
+                paf[
+                    (paf["#qaccver"] == "Pf3D7_02_v3")
+                    & (paf["qstart"] == 1000)
+                    & (paf["qend"] == 6000)
+                    & (paf["length"] == 5000)
+                ]
+            ),
+            1,
+        )
 
 
 if __name__ == "__main__":

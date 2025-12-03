@@ -51,6 +51,12 @@ def main():
         type=int,
     )
     parser.add_argument(
+        "--query-regions",
+        "-r",
+        help="Optional: only process query regions in this bed file [%(default)s]",
+        default="",
+    )
+    parser.add_argument(
         "--dry-run",
         "-n",
         action="store_true",
@@ -93,6 +99,11 @@ def main():
     if blast_args:
         blast_args = f"blast_args='{blast_args}'"
 
+    if args.query_regions:
+        query_regions = f"query_regions={os.path.abspath(args.query_regions)}"
+    else:
+        query_regions = ""
+
     snakecmd = f"""snakemake \
         --jobs {args.jobs} \
         -s {SCRIPT_DIR}/workflows/blast.smk \
@@ -101,6 +112,7 @@ def main():
         --config query={query} \
                  subject={subject} \
                  chunk_size={args.chunk_size} \
+                 {query_regions} \
                  task={args.task} \
                  {blast_args} \
                  cwd={SCRIPT_DIR} \
