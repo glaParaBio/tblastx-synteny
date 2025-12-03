@@ -5,6 +5,9 @@ import os
 import subprocess as sp
 import sys
 from colorama import Fore, Style
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 parser = argparse.ArgumentParser(
     description="Create a synteny file in PAF format using tblastx",
@@ -86,11 +89,9 @@ blast_args = " ".join(args.blast_args).strip()
 if blast_args:
     blast_args = f"blast_args='{blast_args}'"
 
-cwd = os.getcwd()
-
 snakecmd = f"""snakemake \
     --jobs {args.jobs} \
-    -s workflows/blast.smk \
+    -s {SCRIPT_DIR}/workflows/blast.smk \
     --directory {args.directory} \
     {dry_run} \
     --config query={query} \
@@ -98,7 +99,7 @@ snakecmd = f"""snakemake \
              chunk_size={args.chunk_size} \
              task={args.task} \
              {blast_args} \
-             cwd={cwd} \
+             cwd={SCRIPT_DIR} \
     {smk_args}
 """
 

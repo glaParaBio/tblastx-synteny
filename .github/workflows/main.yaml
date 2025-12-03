@@ -30,8 +30,19 @@ jobs:
         conda activate tblastx-synteny
         conda install -n tblastx-synteny --yes --file requirements.txt
 
-    - name: Dry Run Pipeline
+    - name: Run tests
       shell: bash -l {0}
       run: |
         conda activate tblastx-synteny
         ./test/test.py
+
+    - name: Run from different directory
+      shell: bash -l {0}
+      run: |
+        conda activate tblastx-synteny
+        cd ../
+        ./tblastx-synteny/tblastx-synteny.py \
+          -q tblastx-synteny/test/data/PbANKA_MIT_v3.fa \
+          -s tblastx-synteny/test/data/Pf3D7_MIT_v3.fa \
+          -d out
+        ls out/PbANKA_MIT_v3_vs_Pf3D7_MIT_v3.paf
