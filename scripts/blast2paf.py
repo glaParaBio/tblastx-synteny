@@ -80,6 +80,7 @@ subject_fai = prepare_fai_dict(args.subject_fai)
 out = pandas.read_csv(args.blast, sep="\t")
 if args.blast_task == "tblastx":
     out["length"] = out["length"] * 3
+    out["nident"] = out["nident"] * 3
 out = out[
     (out.pident >= args.min_pident)
     & (out.evalue <= args.max_evalue)
@@ -126,9 +127,7 @@ out["saccver_length"] = saccver_length
 out["strand"] = strand
 out["mapq"] = 255
 out["blast_pident"] = ["pi:f:%s" % x for x in out["pident"]]
-# out["blast_nident"] = ["ni:i:%s" % x for x in out["nident"]]
 out["blast_evalue"] = ["ev:f:%s" % x for x in out["evalue"]]
-# out["nident"] = "*"
 
 # Keep highest bitscore for alignments at the same coords
 coords = [
@@ -162,7 +161,6 @@ out = out[
         "length",
         "mapq",
         "blast_pident",
-        "blast_nident",
         "blast_evalue",
         "blast_bitscore",
     ]

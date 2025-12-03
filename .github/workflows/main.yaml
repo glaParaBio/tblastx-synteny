@@ -1,0 +1,37 @@
+name: Test pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        miniforge-variant: Miniforge3
+        channels: conda-forge,bioconda,defaults
+        activate-environment: tblastx-synteny
+        use-mamba: false
+
+    - name: Create and Install Conda Environment
+      shell: bash -l {0}
+      run: |
+        conda create --yes -n tblastx-synteny
+        conda activate tblastx-synteny
+        conda install -n tblastx-synteny --yes --file requirements.txt
+
+    - name: Dry Run Pipeline
+      shell: bash -l {0}
+      run: |
+        conda activate tblastx-synteny
+        ./test/test.py

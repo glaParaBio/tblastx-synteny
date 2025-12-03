@@ -45,9 +45,9 @@ class Test(unittest.TestCase):
             shutil.rmtree("test_out")
         os.makedirs("test_out/input")
 
-    # def tearDown(self):
-    #    if os.path.exists("test_out"):
-    #        shutil.rmtree("test_out")
+    def tearDown(self):
+        if os.path.exists("test_out"):
+            shutil.rmtree("test_out")
 
     def testCanPrintHelp(self):
         cmd = f"{py} --help"
@@ -126,33 +126,55 @@ class Test(unittest.TestCase):
         shell("cp test/data/PbANKA_MIT_v3.fa test/data/Pf3D7_MIT_v3.fa test_out/input/")
         cmd = f"{py} -q test_out/input/PbANKA_MIT_v3.fa -s test_out/input/Pf3D7_MIT_v3.fa -d test_out -S 2000"
         shell(cmd)
+        out = glob.glob("test_out/split_tmp/*")
+        self.assertEqual(len(out), 3)
+
         cmd = f"{py} -q test_out/input/PbANKA_MIT_v3.fa -s test_out/input/Pf3D7_MIT_v3.fa -d test_out -S 1000"
         p = shell(cmd)
         self.assertTrue("Params have changed since last execution" in p.stderr)
+        out = glob.glob("test_out/split_tmp/*")
+        self.assertEqual(len(out), 6)
+
         cmd = f"{py} -q test_out/input/PbANKA_MIT_v3.fa -s test_out/input/Pf3D7_MIT_v3.fa -d test_out -S 1000"
         p = shell(cmd)
         self.assertTrue("Nothing to be done" in p.stderr)
+
         cmd = f"{py} -q test_out/input/PbANKA_MIT_v3.fa -s test_out/input/Pf3D7_MIT_v3.fa -d test_out -S 1000 --blast-args '-evalue 0.123'"
         p = shell(cmd)
         self.assertTrue("Params have changed since last execution" in p.stderr)
+
+        cmd = f"{py} -q test_out/input/PbANKA_MIT_v3.fa -s test_out/input/Pf3D7_MIT_v3.fa -d test_out -S 1000 --blast-args '-evalue 0.123'"
+        p = shell(cmd)
+        self.assertTrue("Nothing to be done" in p.stderr)
 
     def testBlastn(self):
         shell("cp test/data/PbANKA_MIT_v3.fa test/data/Pf3D7_MIT_v3.fa test_out/input/")
         cmd = f"{py} -q test_out/input/PbANKA_MIT_v3.fa -s test_out/input/Pf3D7_MIT_v3.fa -d test_out -S 1000 --task blastn"
         shell(cmd)
-        paf = pandas.read_csv('test_out/PbANKA_MIT_v3_vs_Pf3D7_MIT_v3.paf', sep='\t')
+        paf = pandas.read_csv("test_out/PbANKA_MIT_v3_vs_Pf3D7_MIT_v3.paf", sep="\t")
         top = paf.loc[0]
-        self.assertEqual(top['qstart'], 0)
-        self.assertEqual(top['qend'], 1000)
-        self.assertEqual(top['sstart'], 2)
-        self.assertEqual(top['send'], 1009)
+        self.assertEqual(top["qstart"], 0)
+        self.assertEqual(top["qend"], 1000)
+        self.assertEqual(top["sstart"], 2)
+        self.assertEqual(top["send"], 1009)
+        self.assertEqual(top["length"], 1014)
 
-##qaccver      | qaccver_length | qstart | qend | strand | saccver      | saccver_length | sstart | send | nident | length | mapq | blast_pident | blast_nident | blast_evalue | blast_bitscore
-#PbANKA_MIT_v3 |           5957 |      0 | 1000 | +      | Pf3D7_MIT_v3 |           5967 |      2 | 1009 | *      |   1014 |  255 | pi:f:88.659  | ni:i:899     | ev:f:0.0     | bs:f:1262
-#PbANKA_MIT_v3 |           5957 |   1000 | 1998 | +      | Pf3D7_MIT_v3 |           5967 |   1009 | 2001 | *      |   1000 |  255 | pi:f:88.5    | ni:i:885     | ev:f:0.0     | bs:f:1277
-#PbANKA_MIT_v3 |           5957 |   2000 | 3000 | +      | Pf3D7_MIT_v3 |           5967 |   2003 | 2999 | *      |   1000 |  255 | pi:f:86.3    | ni:i:863     | ev:f:0.0     | bs:f:1181
-#PbANKA_MIT_v3 |           5957 |   3001 | 4000 | +      | Pf3D7_MIT_v3 |           5967 |   3000 | 3992 | *      |    999 |  255 | pi:f:83.684  | ni:i:836     | ev:f:0.0     | bs:f:1069
-#PbANKA_MIT_v3 |           5957 |   4001 | 4999 | +      | Pf3D7_MIT_v3 |           5967 |   3993 | 4995 | *      |   1006 |  255 | pi:f:87.674  | ni:i:882     | ev:f:0.0     | bs:f:1249
+    def testLargerJob(self):
+        shell(
+            "cp test/data/Pfalciparum3D7.small.fasta test/data/PlasmoDB-68_PbergheiANKA_Genome.fasta test_out/input/"
+        )
+        shell(
+            f"{py} -q test/data/Pfalciparum3D7.small.fasta -s test/data/PlasmoDB-68_PbergheiANKA_Genome.fasta -d test_out/ -S 100000 --task blastn -j 10"
+        )
+        paf = pandas.read_csv(
+            "test_out/Pfalciparum3D7.small_vs_PlasmoDB-68_PbergheiANKA_Genome.paf",
+            sep="\t",
+        )
+        self.assertEqual(
+            sorted(set(paf["#qaccver"])), ["Pf3D7_01_v3", "Pf3D7_02_v3", "Pf3D7_API_v3"]
+        )
+        self.assertEqual(len(set(paf["saccver"])), 15)
+
 
 if __name__ == "__main__":
     unittest.main()

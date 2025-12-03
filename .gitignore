@@ -9,3 +9,4 @@
 *.ntf
 *.nto
 *.snakemake
+/test_out/

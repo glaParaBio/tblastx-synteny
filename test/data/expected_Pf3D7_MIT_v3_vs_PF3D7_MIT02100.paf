@@ -1,4 +1,4 @@
-#qaccver	qaccver_length	qstart	qend	strand	saccver	saccver_length	sstart	send	nident	length	mapq	blast_pident	blast_nident	blast_evalue	blast_bitscore
-Pf3D7_MIT_v3	5967	1944	3471	+	PF3D7_MIT02100.1	1527	0	1527	*	1527	255	pi:f:100.0	ni:i:509	ev:f:0.0	bs:f:1213
-Pf3D7_MIT_v3	5967	1945	3469	+	PF3D7_MIT02100.1	1527	1	1525	*	1524	255	pi:f:100.0	ni:i:508	ev:f:0.0	bs:f:1131
-Pf3D7_MIT_v3	5967	1946	3470	+	PF3D7_MIT02100.1	1527	2	1526	*	1524	255	pi:f:100.0	ni:i:508	ev:f:0.0	bs:f:1276
+#qaccver	qaccver_length	qstart	qend	strand	saccver	saccver_length	sstart	send	nident	length	mapq	blast_pident	blast_evalue	blast_bitscore
+Pf3D7_MIT_v3	5967	1944	3471	+	PF3D7_MIT02100.1	1527	0	1527	1527	1527	255	pi:f:100.0	ev:f:0.0	bs:f:1213
+Pf3D7_MIT_v3	5967	1945	3469	+	PF3D7_MIT02100.1	1527	1	1525	1524	1524	255	pi:f:100.0	ev:f:0.0	bs:f:1131
+Pf3D7_MIT_v3	5967	1946	3470	+	PF3D7_MIT02100.1	1527	2	1526	1524	1524	255	pi:f:100.0	ev:f:0.0	bs:f:1276

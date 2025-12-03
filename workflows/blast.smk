@@ -95,7 +95,7 @@ rule blast:
     params:
         fmt=" ".join(BLAST_FMT),
         task=task,
-        blast_args='' if 'blast_args' not in config else config['blast_args'],
+        blast_args="" if "blast_args" not in config else config["blast_args"],
         cwd=config["cwd"],
     shell:
         r"""
@@ -117,7 +117,7 @@ rule blast_to_paf:
         paf=temp("paf/{window}.paf"),
     params:
         cwd=config["cwd"],
-        task=config['task'],
+        task=config["task"],
     shell:
         r"""
         {params.cwd}/scripts/blast2paf.py \
