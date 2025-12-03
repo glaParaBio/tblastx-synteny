@@ -7,12 +7,15 @@ import sys
 from colorama import Fore, Style
 from pathlib import Path
 
+
 def main():
     SCRIPT_DIR = Path(__file__).resolve().parent
 
     parser = argparse.ArgumentParser(
         description="Create a synteny file in PAF format using tblastx",
-        formatter_class=lambda prog: argparse.RawDescriptionHelpFormatter(prog, width=80),
+        formatter_class=lambda prog: argparse.RawDescriptionHelpFormatter(
+            prog, width=80
+        ),
     )
 
     parser.add_argument(
@@ -126,7 +129,7 @@ def main():
         sys.exit(p.returncode)
 
 
-if __name__ == '__main__':
-    if sys.argv[0].endswith('.exe'):
+if __name__ == "__main__":
+    if sys.argv[0].endswith(".exe"):
         sys.argv[0] = sys.argv[0][:-4]
     sys.exit(main())

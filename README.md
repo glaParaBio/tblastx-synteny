@@ -8,6 +8,13 @@
 
 # Setup
 
+Get the source code of this project using git or dowload the zip file from GitHub:
+
+```
+git clone https://github.com/glaParaBio/tblastx-synteny
+cd tblastx-synteny
+```
+
 Install dependencies:
 
 ```
